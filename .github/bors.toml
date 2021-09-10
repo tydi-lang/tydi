@@ -1,4 +1,7 @@
 status = [
-  "Check (stable)"
+  "Check (stable)",
+  "Test (stable)",
+  "Rustfmt",
+  "Clippy (stable)"
 ]
 delete_merged_branches = true
