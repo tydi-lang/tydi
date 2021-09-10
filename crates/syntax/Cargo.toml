@@ -1,0 +1,10 @@
+[package]
+name = "tydi-syntax"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "Syntax definitions for Tydi"
+
+[dependencies]
+rowan = "0.13"
+tydi-lexer = { path = "../lexer" }
