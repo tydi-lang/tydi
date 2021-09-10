@@ -1,0 +1,9 @@
+[package]
+name = "tydi-lexer"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "Lexer for Tydi"
+
+[dependencies]
+logos = "0.12"
