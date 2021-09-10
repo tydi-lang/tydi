@@ -1,0 +1,4 @@
+status = [
+  "Check (stable)"
+]
+delete_merged_branches = true
