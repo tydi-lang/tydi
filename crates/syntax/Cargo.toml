@@ -6,5 +6,5 @@ publish = false
 description = "Syntax definitions for Tydi"
 
 [dependencies]
-rowan = "0.13"
+rowan = "0.14"
 tydi-lexer = { path = "../lexer" }
