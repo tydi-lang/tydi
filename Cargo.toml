@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "crates/intern",
   "crates/lexer",
   "crates/syntax"
 ]
