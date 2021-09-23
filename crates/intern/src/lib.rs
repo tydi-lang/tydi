@@ -24,12 +24,19 @@ macro_rules! intern_id {
 
 intern_id!(String, StringId);
 
-/// Super trait for intern traits with intern support for primitive types.
-#[salsa::query_group(InternSupportDatabase)]
-pub trait InternSupport {
-    #[salsa::interned]
-    fn intern_string(&self, string: String) -> StringId;
+mod query {
+    use super::*;
+
+    /// Super trait for intern traits with intern support for primitive types.
+    #[salsa::query_group(InternSupportDatabase)]
+    pub trait InternSupport {
+        #[salsa::interned]
+        fn intern_string(&self, string: String) -> StringId;
+    }
 }
+
+// Export the query group trait and storage struct.
+pub use query::{InternSupport, InternSupportDatabase};
 
 /// Transforms owned data types to referenced data types.
 pub trait IntoRefData {
