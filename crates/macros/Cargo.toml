@@ -1,0 +1,14 @@
+[package]
+name = "tydi-macros"
+version = "0.0.0"
+edition = "2018"
+description = "Procedural macros for Tydi crates"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+heck = "0.3.3"
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "1", default-features = false }
