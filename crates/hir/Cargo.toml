@@ -1,0 +1,11 @@
+[project]
+name = "tydi-hir"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "High-level intermediate representation of Tydi"
+
+[dependencies]
+salsa = "0.16"
+tydi-macros = { path = "../macros" }
+tydi-intern = { path = "../intern" }

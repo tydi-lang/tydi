@@ -175,6 +175,7 @@ pub(super) fn gen(item: TokenStream) -> TokenStream {
                 #tokens
             }
             pub use gen::#intern_trait;
+            pub use gen::#intern_storage;
             #(
                 pub use gen::#intern_id;
                 pub use gen::#intern_ref_data;

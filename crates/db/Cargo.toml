@@ -1,0 +1,11 @@
+[project]
+name = "tydi-db"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "Compiler database for Tydi"
+
+[dependencies]
+salsa = "0.16"
+tydi-hir = { path = "../hir" }
+tydi-intern = { path = "../intern" }
