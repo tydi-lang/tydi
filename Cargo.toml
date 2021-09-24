@@ -2,5 +2,6 @@
 members = [
   "crates/intern",
   "crates/lexer",
+  "crates/manifest",
   "crates/syntax"
 ]

@@ -1,0 +1,11 @@
+[project]
+name = "tydi-manifest"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "Manifest for Tydi projects"
+
+[dependencies]
+semver = { version = "1", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.5"
