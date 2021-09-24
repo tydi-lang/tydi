@@ -5,6 +5,12 @@ mod hir {
     pub struct Package {
         pub identifier: Identifier,
     }
+
+    pub enum Type {
+        Bits(usize),
+        Stream,
+        Path { segments: Vec<Identifier> },
+    }
 }
 
 pub use hir::*;

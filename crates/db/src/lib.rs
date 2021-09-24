@@ -9,7 +9,7 @@ impl salsa::Database for Database {}
 #[cfg(test)]
 mod tests {
     use super::Database;
-    use tydi_hir::{Identifier, InternHir, Package};
+    use tydi_hir::{Identifier, InternHir, Package, Type, TypeRefData};
     use tydi_intern::{InternSupport, IntoRefData};
 
     const IDENT: &str = "test";
@@ -38,5 +38,16 @@ mod tests {
 
         let package_id = db.intern_package(package_ref_data.clone());
         assert_eq!(db.lookup_intern_package(package_id), package_ref_data);
+
+        let type_ref_data = Type::Path {
+            segments: vec![Identifier(String::from(IDENT))],
+        }
+        .into_ref_data(&db);
+        assert_eq!(
+            type_ref_data,
+            TypeRefData::Path {
+                segments: vec![identifier_ref_data],
+            }
+        );
     }
 }
