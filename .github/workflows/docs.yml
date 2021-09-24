@@ -1,0 +1,45 @@
+name: Docs
+
+on:
+  push:
+    branches:
+    - main
+    - staging
+    - trying
+  pull_request:
+
+jobs:
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: actions-rs/toolchain@v1.0.7
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - uses: actions-rs/cargo@v1.0.3
+      with:
+        command: docs
+        args: --no-deps
+    - uses: actions/upload-artifact@v2
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      with:
+        name: rustdoc
+        path: target/doc
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [rustdoc]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: rustdoc
+        path: public
+    - uses: peaceiris/actions-gh-pages@v3.8.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        force_orphan: true
