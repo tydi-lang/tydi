@@ -21,7 +21,7 @@ jobs:
         override: true
     - uses: actions-rs/cargo@v1.0.3
       with:
-        command: docs
+        command: doc
         args: --no-deps
     - uses: actions/upload-artifact@v2
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
