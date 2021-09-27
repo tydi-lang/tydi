@@ -34,7 +34,7 @@ mod tests {
 
         let identifier_ref_data = Identifier(String::from(IDENT)).into_ref_data(&db);
         assert_eq!(package_ref_data.identifier, identifier_ref_data);
-        assert_eq!(identifier_ref_data._0, string_id);
+        assert_eq!(identifier_ref_data.0, string_id);
 
         let package_id = db.intern_package(package_ref_data.clone());
         assert_eq!(db.lookup_intern_package(package_id), package_ref_data);

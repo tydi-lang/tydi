@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
     parse, punctuated::Punctuated, token::Comma, Field, Fields, FieldsNamed, FieldsUnnamed, Ident,
-    Index, Item, ItemEnum, ItemMod, ItemStruct, Type, Variant,
+    Index, Item, ItemEnum, ItemMod, ItemStruct, Variant,
 };
 
 fn item_ident(item: &Item) -> &Ident {
@@ -26,37 +26,79 @@ fn intern_fn_ident(ident: &Ident) -> Ident {
     format_ident!("intern_{}", ident.to_string().to_snake_case())
 }
 
-fn fields_iter(fields: &Fields) -> impl Iterator<Item = Field> {
-    (match fields.clone() {
-        Fields::Unit => Punctuated::<Field, Comma>::new(),
-        Fields::Named(FieldsNamed { named: fields, .. })
-        | Fields::Unnamed(FieldsUnnamed {
-            unnamed: fields, ..
-        }) => fields,
-    })
-    .into_iter()
-}
-
-fn fields_ident_iter(fields: &Fields) -> impl Iterator<Item = Ident> {
-    fields_iter(fields)
-        .enumerate()
-        .map(|(idx, Field { ident, .. })| ident.unwrap_or_else(|| format_ident!("_{}", idx)))
-}
-
-fn fields_index_iter(fields: &Fields) -> impl Iterator<Item = TokenStream2> {
-    fields_iter(fields)
-        .enumerate()
-        .map(|(idx, Field { ident, .. })| match ident {
-            Some(ident) => quote!(#ident),
-            None => {
-                let idx = Index::from(idx);
-                quote!(#idx)
+fn fields_ref_data(
+    ident: &Ident,
+    vis: TokenStream2,
+    end: TokenStream2,
+    fields: &Fields,
+) -> TokenStream2 {
+    match fields {
+        Fields::Unit => quote!(#ident #end),
+        Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+            let ty = unnamed.into_iter().map(|Field { ty, .. }| ty);
+            quote! {
+                #ident (
+                    #(
+                        #vis <#ty as ::tydi_intern::IntoRefData>::RefData,
+                    )*
+                ) #end
             }
-        })
+        }
+        Fields::Named(FieldsNamed { named, .. }) => {
+            let field = named
+                .into_iter()
+                .map(|Field { ident, .. }| ident.as_ref().unwrap());
+            let ty = named.into_iter().map(|Field { ty, .. }| ty);
+            quote! {
+                #ident {
+                    #(
+                        #vis #field: <#ty as ::tydi_intern::IntoRefData>::RefData,
+                    )*
+                }
+            }
+        }
+    }
 }
 
-fn fields_types_iter(fields: &Fields) -> impl Iterator<Item = Type> {
-    fields_iter(fields).map(|Field { ty, .. }| ty)
+fn fields_into_ref_data(ref_data_ident: &Ident, fields: &Fields) -> TokenStream2 {
+    match fields {
+        Fields::Unit => quote!(Self::RefData),
+        Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+            let idx = (0..unnamed.into_iter().count())
+                .into_iter()
+                .map(Index::from)
+                .map(|idx| quote!(#idx));
+            let field = (0..unnamed.into_iter().count())
+                .map(|idx| format_ident!("_{}", idx))
+                .collect::<Vec<_>>();
+            quote! {
+                #(
+                    let #field = self.#idx.into_ref_data(db);
+                )*
+                #ref_data_ident(
+                    #(
+                        #field,
+                    )*
+                )
+            }
+        }
+        Fields::Named(FieldsNamed { named, .. }) => {
+            let field = named
+                .into_iter()
+                .map(|Field { ident, .. }| ident)
+                .collect::<Vec<_>>();
+            quote! {
+                #(
+                    let #field = self.#field.into_ref_data(db);
+                )*
+                Self::RefData {
+                    #(
+                        #field,
+                    )*
+                }
+            }
+        }
+    }
 }
 
 type Variants = Punctuated<Variant, Comma>;
@@ -64,32 +106,7 @@ type Variants = Punctuated<Variant, Comma>;
 fn variant_ref_data_iter(variants: &Variants) -> impl Iterator<Item = TokenStream2> + '_ {
     variants
         .into_iter()
-        .map(|Variant { ident, fields, .. }| match fields {
-            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
-                let ty = unnamed.into_iter().map(|Field { ty, .. }| ty);
-                quote! {
-                    #ident(
-                        #(
-                            #ty,
-                        )*
-                    )
-                }
-            }
-            Fields::Unit => quote!(#ident),
-            Fields::Named(FieldsNamed { named, .. }) => {
-                let field = named
-                    .iter()
-                    .map(|Field { ident, .. }| ident.as_ref().unwrap());
-                let ty = named.iter().map(|Field { ty, .. }| ty);
-                quote!(
-                    #ident {
-                        #(
-                            #field: <#ty as ::tydi_intern::IntoRefData>::RefData,
-                        )*
-                    }
-                )
-            }
-        })
+        .map(|Variant { ident, fields, .. }| fields_ref_data(ident, quote!(), quote!(), fields))
 }
 
 fn variant_into_ref_data_iter(variants: &Variants) -> impl Iterator<Item = TokenStream2> + '_ {
@@ -129,7 +146,7 @@ fn variant_into_ref_data_iter(variants: &Variants) -> impl Iterator<Item = Token
                     } => {
                         Self::RefData::#ident {
                             #(
-                                #fields: #fields.into_ref_data(db)
+                                #fields: #fields.into_ref_data(db),
                             )*
                         }
                     }
@@ -196,32 +213,20 @@ pub(super) fn gen(item: TokenStream) -> TokenStream {
                 Item::Struct(ItemStruct {  ident, fields, .. }) => {
                     let id = intern_id_ident(&ident);
                     let ref_data = ref_data_ident(&ident);
-                    let field_ident = fields_ident_iter(&fields).collect::<Vec<_>>();
-                    let field_index = fields_index_iter(&fields);
-                    let field_types = fields_types_iter(&fields);
+                    let fields_ref_data = fields_ref_data(&ref_data, quote!(pub), quote!(;), &fields);
+                    let fields_into_ref_data = fields_into_ref_data(&ref_data, &fields);
 
                     quote!(
                         #[automatically_derived]
                         #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-                        pub struct #ref_data {
-                            #(
-                                pub #field_ident: <#field_types as ::tydi_intern::IntoRefData>::RefData,
-                            )*
-                        }
+                        pub struct #fields_ref_data
 
                         #[automatically_derived]
                         impl ::tydi_intern::IntoRefData for #ident {
                             type Id = #id;
                             type RefData = #ref_data;
                             fn into_ref_data(self, db: &dyn ::tydi_intern::InternSupport) -> Self::RefData {
-                                #(
-                                    let #field_ident = self.#field_index.into_ref_data(db);
-                                )*
-                                Self::RefData {
-                                    #(
-                                        #field_ident,
-                                    )*
-                                }
+                                #fields_into_ref_data
                             }
                         }
                     )
