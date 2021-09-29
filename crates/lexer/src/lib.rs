@@ -30,6 +30,8 @@
 //! ```
 
 use logos::Logos;
+use std::{convert::TryInto, ops::Range};
+use text_size::TextRange;
 
 /// Tokens, the primitive productions used in the grammar rules.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Logos)]
@@ -106,7 +108,9 @@ impl<'src> Iterator for Lexer<'src> {
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.0.next()?;
         let text = self.0.slice();
-        Some(Token { kind, text })
+        let Range { start, end } = self.0.span();
+        let range = TextRange::new(start.try_into().unwrap(), end.try_into().unwrap());
+        Some(Token { kind, text, range })
     }
 }
 
@@ -115,6 +119,7 @@ impl<'src> Iterator for Lexer<'src> {
 pub struct Token<'src> {
     pub kind: TokenKind,
     pub text: &'src str,
+    pub range: TextRange,
 }
 
 impl Token<'_> {
