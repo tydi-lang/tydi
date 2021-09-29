@@ -1,4 +1,4 @@
-#[salsa::database(tydi_hir::InternHirDatabase, tydi_intern::InternSupportDatabase)]
+#[salsa::database(tydi_hir::HirStorage)]
 #[derive(Default)]
 pub struct Database {
     storage: salsa::Storage<Database>,
@@ -8,46 +8,45 @@ impl salsa::Database for Database {}
 
 #[cfg(test)]
 mod tests {
-    use super::Database;
-    use tydi_hir::{Identifier, InternHir, Package, Type, TypeRefData};
-    use tydi_intern::{InternSupport, IntoRefData};
-
-    const IDENT: &str = "test";
+    use super::*;
+    use std::{ops::Deref, sync::Arc};
+    use tydi_hir::{Hir, Identifier, Module, Root, Statement, TypeDefinition};
 
     #[test]
-    fn intern_support() {
-        let db = Database::default();
+    fn basic() {
+        let mut db = Database::default();
 
-        let id = db.intern_string(IDENT.to_string());
-        assert_eq!(db.lookup_intern_string(id), IDENT.to_string());
-    }
+        let identifier = |name| db.intern_identifier(Identifier(String::from(name)));
 
-    #[test]
-    fn intern_hir() {
-        let db = Database::default();
+        let module = |name, statements| {
+            db.intern_module(Module {
+                identifier: identifier(name),
+                statements,
+            })
+        };
+        let root = |modules| Root { modules };
 
-        let string_id = db.intern_string(IDENT.to_string());
-        let package_ref_data = Package {
-            identifier: Identifier(String::from(IDENT)),
-        }
-        .into_ref_data(&db);
+        let type_def = |name| {
+            db.intern_statement(Statement::TypeDefinition(TypeDefinition {
+                identifier: identifier(name),
+            }))
+        };
 
-        let identifier_ref_data = Identifier(String::from(IDENT)).into_ref_data(&db);
-        assert_eq!(package_ref_data.identifier, identifier_ref_data);
-        assert_eq!(identifier_ref_data.0, string_id);
+        // Construct some input data.
+        let foo = type_def("foo");
+        let bar = type_def("bar");
+        let foobar = type_def("foobar");
+        let a = module("a", vec![foo, bar]);
+        let b = module("b", vec![foobar]);
+        let c = module("c", vec![]);
 
-        let package_id = db.intern_package(package_ref_data.clone());
-        assert_eq!(db.lookup_intern_package(package_id), package_ref_data);
+        db.set_root(Arc::new(root(vec![a, b])));
+        assert_eq!(db.statements().deref(), &vec![foo, bar, foobar]);
 
-        let type_ref_data = Type::Path {
-            segments: vec![Identifier(String::from(IDENT))],
-        }
-        .into_ref_data(&db);
-        assert_eq!(
-            type_ref_data,
-            TypeRefData::Path {
-                segments: vec![identifier_ref_data],
-            }
-        );
+        db.set_root(Arc::new(root(vec![a])));
+        assert_eq!(db.statements().deref(), &vec![foo, bar]);
+
+        db.set_root(Arc::new(root(vec![a, c])));
+        assert_eq!(db.statements().deref(), &vec![foo, bar]);
     }
 }
