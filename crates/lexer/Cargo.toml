@@ -7,3 +7,4 @@ description = "Lexer for Tydi"
 
 [dependencies]
 logos = "0.12"
+text-size = "1"
