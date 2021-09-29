@@ -6,13 +6,15 @@
 //!
 //! ```rust
 //! use tydi_lexer::{Lexer, Token, TokenKind};
+//! use text_size::{TextRange, TextSize};
 //!
 //! let input = "type Byte = Bits<8>;";
 //! let mut lexer = Lexer::new(input);
 //!
-//! let Token { kind, text } = lexer.next().unwrap();
+//! let Token { kind, text, range } = lexer.next().unwrap();
 //! assert_eq!(kind, TokenKind::Type);
 //! assert_eq!(text, "type");
+//! assert_eq!(range.len(), TextSize::from(4));
 //!
 //! let token = lexer.next().unwrap();
 //! assert!(token.is_trivia());
