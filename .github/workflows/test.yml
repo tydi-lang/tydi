@@ -17,7 +17,7 @@ jobs:
         rust:
           - stable
     steps:
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - uses: actions-rs/toolchain@v1.0.7
       with:
         profile: minimal
@@ -35,7 +35,7 @@ jobs:
         rust:
           - stable
     steps:
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - uses: actions-rs/toolchain@v1.0.7
       with:
         profile: minimal
@@ -49,7 +49,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - uses: actions-rs/toolchain@v1.0.7
       with:
         profile: minimal
@@ -69,7 +69,7 @@ jobs:
         rust:
           - stable
     steps:
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - uses: actions-rs/toolchain@v1.0.7
       with:
         profile: minimal
