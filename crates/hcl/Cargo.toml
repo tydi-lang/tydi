@@ -1,0 +1,11 @@
+[package]
+name = "tydi-hcl"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "User-friendly Rust API to construct Tydi High-Level Intermediate Representation"
+
+[dependencies]
+tydi-db = { path = "../db" }
+tydi-hir = { path = "../hir" }
+tydi-intern = { path = "../intern" }

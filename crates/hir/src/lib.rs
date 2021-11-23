@@ -1,92 +1,196 @@
+//! The Tydi High-level Intermediate Representation.
+
+pub mod component;
+pub mod identifier;
+pub mod net;
+pub mod r#type;
+
+pub use crate::{
+    component::{Component, Instance},
+    identifier::Identifier,
+    net::{Connection, InstancePort, Mode, Net, Port, Wire},
+    r#type::*,
+};
 use std::sync::Arc;
 use tydi_intern::Id;
 
+/// The root node of a hardware design description.
+// TODO: When we allow importing external projects, we need to change this.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Root {
+pub struct Project {
+    /// The modules within a project.
     pub modules: Vec<Id<Module>>,
 }
 
+/// A collection of components, constants and types.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Module {
+    /// The identifier of the module.
     pub identifier: Id<Identifier>,
-    pub statements: Vec<Id<Statement>>,
+    /// The components that this module describes.
+    pub components: Vec<Id<Component>>,
+    /// The types that this module describes.
+    pub types: Vec<Id<Type>>,
+    // TODO: constants
+    // TODO: nested modules
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Statement {
-    TypeDefinition(TypeDefinition),
-    Other,
-}
+impl Module {
+    /// Create an empty module.
+    pub fn new(identifier: Id<Identifier>) -> Self {
+        Self {
+            identifier,
+            components: vec![],
+            types: vec![],
+        }
+    }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct TypeDefinition {
-    pub identifier: Id<Identifier>,
-}
+    /// Append a component to the module.
+    pub fn with_component(mut self, comp: Id<Component>) -> Self {
+        self.components.push(comp);
+        self
+    }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Identifier(pub String);
+    /// Append a type to the module.
+    pub fn with_type(mut self, typ: Id<Type>) -> Self {
+        self.types.push(typ);
+        self
+    }
+}
 
 #[salsa::query_group(HirStorage)]
 pub trait Hir {
-    // Temporary input.
     #[salsa::input]
-    fn root(&self) -> Arc<Root>;
+    fn project(&self) -> Arc<Project>;
 
     #[salsa::interned]
-    fn intern_module(&self, module: Module) -> Id<Module>;
+    fn intern_module(&self, modules: Module) -> Id<Module>;
     #[salsa::interned]
-    fn intern_statement(&self, statement: Statement) -> Id<Statement>;
+    fn intern_component(&self, component: Component) -> Id<Component>;
+    #[salsa::interned]
+    fn intern_instance(&self, instance: Instance) -> Id<Instance>;
     #[salsa::interned]
     fn intern_identifier(&self, identifier: Identifier) -> Id<Identifier>;
+    #[salsa::interned]
+    fn intern_port(&self, port: Port) -> Id<Port>;
+    #[salsa::interned]
+    fn intern_net(&self, net: Net) -> Id<Net>;
+    #[salsa::interned]
+    fn intern_instance_port(&self, instance_port: InstancePort) -> Id<InstancePort>;
+    #[salsa::interned]
+    fn intern_connection(&self, connection: Connection) -> Id<Connection>;
+    #[salsa::interned]
+    fn intern_type(&self, typ: Type) -> Id<Type>;
+    #[salsa::interned]
+    fn intern_logical_type(&self, typ: LogicalType) -> Id<LogicalType>;
+    #[salsa::interned]
+    fn intern_field(&self, field: Field) -> Id<Field>;
 
+    /// Obtain all modules.
     fn modules(&self) -> Arc<Vec<Id<Module>>>;
-    fn module_statements(&self, module: Id<Module>) -> Arc<Vec<Id<Statement>>>;
-    fn module_type_definitions(&self, module: Id<Module>) -> Arc<Vec<TypeDefinition>>;
 
-    fn statements(&self) -> Arc<Vec<Id<Statement>>>;
-    fn type_definitions(&self) -> Arc<Vec<TypeDefinition>>;
+    /// Obtain all components from a modules.
+    fn components(&self, modules: Id<Module>) -> Arc<Vec<Id<Component>>>;
+
+    /// Obtain all instances of a component.
+    fn instances(&self, component: Id<Component>) -> Arc<Vec<Id<Instance>>>;
+
+    /// Obtain all nets of a component.
+    fn nets(&self, component: Id<Component>) -> Arc<Vec<Net>>;
+
+    /// Obtain all Port nets of a component.
+    fn ports(&self, component: Id<Component>) -> Arc<Vec<Port>>;
+
+    /// Obtain all Wire nets of a component.
+    fn wires(&self, component: Id<Component>) -> Arc<Vec<Wire>>;
+
+    /// Obtain all InstancePort nets of a component.
+    fn instance_ports(&self, component: Id<Component>) -> Arc<Vec<InstancePort>>;
+
+    /// Get the identifier of a modules.
+    fn module_identifier(&self, modules: Id<Module>) -> Arc<Identifier>;
+
+    /// Get the identifier of a component.
+    fn component_identifier(&self, component: Id<Component>) -> Arc<Identifier>;
+
+    /// Get the identifier of a port.
+    fn port_identifier(&self, component: Id<Port>) -> Arc<Identifier>;
+
+    /// Get the identifier of an instance.
+    fn instance_identifier(&self, component: Id<Instance>) -> Arc<Identifier>;
 }
 
 fn modules(db: &dyn Hir) -> Arc<Vec<Id<Module>>> {
-    Arc::new(db.root().modules.clone())
+    Arc::new(db.project().modules.clone())
 }
 
-fn module_statements(db: &dyn Hir, module: Id<Module>) -> Arc<Vec<Id<Statement>>> {
-    Arc::new(db.lookup_intern_module(module).statements)
+fn components(db: &dyn Hir, module: Id<Module>) -> Arc<Vec<Id<Component>>> {
+    Arc::new(db.lookup_intern_module(module).components)
 }
 
-fn module_type_definitions(db: &dyn Hir, module: Id<Module>) -> Arc<Vec<TypeDefinition>> {
+fn instances(db: &dyn Hir, component: Id<Component>) -> Arc<Vec<Id<Instance>>> {
+    Arc::new(db.lookup_intern_component(component).instances)
+}
+
+fn nets(db: &dyn Hir, component: Id<Component>) -> Arc<Vec<Net>> {
     Arc::new(
-        db.module_statements(module)
+        db.lookup_intern_component(component)
+            .nets
             .iter()
-            .map(|&id| db.lookup_intern_statement(id))
-            .filter_map(|statement| match statement {
-                Statement::TypeDefinition(type_definition) => Some(type_definition),
+            .map(|&nid| db.lookup_intern_net(nid))
+            .collect(),
+    )
+}
+
+fn ports(db: &dyn Hir, component: Id<Component>) -> Arc<Vec<Port>> {
+    Arc::new(
+        db.nets(component)
+            .iter()
+            .filter_map(|net| match *net {
+                Net::Port(p) => Some(db.lookup_intern_port(p)),
                 _ => None,
             })
             .collect(),
     )
 }
 
-fn statements(db: &dyn Hir) -> Arc<Vec<Id<Statement>>> {
+fn wires(db: &dyn Hir, component: Id<Component>) -> Arc<Vec<Wire>> {
     Arc::new(
-        db.modules()
+        db.nets(component)
             .iter()
-            .flat_map(|&id| db.module_statements(id).iter().copied().collect::<Vec<_>>())
+            .filter_map(|net| match *net {
+                Net::Wire(w) => Some(w),
+                _ => None,
+            })
             .collect(),
     )
 }
 
-fn type_definitions(db: &dyn Hir) -> Arc<Vec<TypeDefinition>> {
+fn instance_ports(db: &dyn Hir, component: Id<Component>) -> Arc<Vec<InstancePort>> {
     Arc::new(
-        db.modules()
+        db.nets(component)
             .iter()
-            .flat_map(|&id| {
-                db.module_type_definitions(id)
-                    .iter()
-                    .copied()
-                    .collect::<Vec<_>>()
+            .filter_map(|net| match *net {
+                Net::InstancePort(i) => Some(i),
+                _ => None,
             })
             .collect(),
     )
+}
+
+// TODO: make a macro for everything that has an identifier:
+fn module_identifier(db: &dyn Hir, modules: Id<Module>) -> Arc<Identifier> {
+    Arc::new(db.lookup_intern_identifier(db.lookup_intern_module(modules).identifier))
+}
+
+fn component_identifier(db: &dyn Hir, component: Id<Component>) -> Arc<Identifier> {
+    Arc::new(db.lookup_intern_identifier(db.lookup_intern_component(component).identifier))
+}
+
+fn port_identifier(db: &dyn Hir, port: Id<Port>) -> Arc<Identifier> {
+    Arc::new(db.lookup_intern_identifier(db.lookup_intern_port(port).identifier))
+}
+
+fn instance_identifier(db: &dyn Hir, instance: Id<Instance>) -> Arc<Identifier> {
+    Arc::new(db.lookup_intern_identifier(db.lookup_intern_instance(instance).identifier))
 }
