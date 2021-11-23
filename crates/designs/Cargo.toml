@@ -1,0 +1,11 @@
+[package]
+name = "tydi-designs"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "Pre-defined designs that can be used for testing purposes."
+
+[dependencies]
+tydi-db = {path = "../db"}
+tydi-hir = {path = "../hir"}
+tydi-hcl = {path = "../hcl"}

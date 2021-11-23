@@ -6,5 +6,5 @@ publish = false
 description = "High-level intermediate representation of Tydi"
 
 [dependencies]
-salsa = "0.16"
 tydi-intern = { path = "../intern" }
+salsa = "0.16"

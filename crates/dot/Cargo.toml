@@ -1,0 +1,12 @@
+[package]
+name = "tydi-dot"
+version = "0.0.0"
+edition = "2018"
+publish = false
+description = "DOT back-end for Tydi High-level Intermediate Representation"
+
+[dependencies]
+tydi-db = { path = "../db" }
+tydi-hir = { path = "../hir" }
+tydi-intern = { path = "../intern" }
+tydi-designs = { path = "../designs" }
