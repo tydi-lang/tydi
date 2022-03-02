@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Component","A component. Represents a hierarchical entity in a hardware design."],["Instance","An instance of a component."]]});

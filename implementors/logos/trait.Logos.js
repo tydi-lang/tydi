@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["tydi_lexer"] = [{"text":"impl&lt;'s&gt; Logos&lt;'s&gt; for <a class=\"enum\" href=\"tydi_lexer/enum.TokenKind.html\" title=\"enum tydi_lexer::TokenKind\">TokenKind</a>","synthetic":false,"types":["tydi_lexer::TokenKind"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

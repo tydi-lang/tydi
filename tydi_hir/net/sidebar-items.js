@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Mode","An I/O mode."],["Net","A net that is sinked and sourced."]],"struct":[["Connection","A connection between two nets."],["InstancePort","A port of an instance."],["Port","A port of a component."],["Wire","A wire inside a component."]]});

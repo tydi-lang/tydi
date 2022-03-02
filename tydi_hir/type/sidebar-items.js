@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Direction","The direction of things that have directions, such as fields in compound types like Group or Union."],["LogicalType","The Tydi Logical Type."],["Type","A Tydi Type."]],"struct":[["Field","The field of a group or union."],["Group","The Group type."],["NamedType","A type with a name."]]});

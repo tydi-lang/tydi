@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["style","Utilities to help styling DOT Graphs of the high-level intermediate representation."]],"struct":[["DotProject","A Graphviz DOT graph representation of a high-level intermediate representation."]],"trait":[["Dot","Trait to traverse through High-level Intermediate Representation nodes and produce a DOT source."]]});

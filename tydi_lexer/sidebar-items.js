@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["TokenKind","Tokens, the primitive productions used in the grammar rules."]],"struct":[["Lexer","Lexer produces tokens from a source input."],["Token","Token with kind and source text."]]});

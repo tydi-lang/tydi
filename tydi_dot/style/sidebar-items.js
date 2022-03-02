@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["colors","Some basic colors"]],"struct":[["EdgeStyles","Style of edges."],["NodeStyle","Style of a node."],["NodeStyles","Collection of styles for the HIR nodes."],["Style","HIR Graphviz DOT representation style."]]});

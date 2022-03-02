@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["SyntaxKind","Syntax tokens and nodes."],["Tydi",""]],"type":[["SyntaxElement",""],["SyntaxElementChildren",""],["SyntaxNode",""],["SyntaxNodeChildren",""],["SyntaxToken",""]]});
